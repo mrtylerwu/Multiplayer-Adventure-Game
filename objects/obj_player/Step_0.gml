@@ -48,3 +48,8 @@ if (instance_exists(obj_client)) {
     network_send_packet(obj_client.socket, b, buffer_tell(b));
     buffer_delete(b);
 }
+
+if (damage_timer > 0)
+{
+    damage_timer -= 1 / room_speed;
+}
