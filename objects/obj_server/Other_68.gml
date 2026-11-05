@@ -48,6 +48,50 @@ switch (async_load[? "type"]) {
                     }
                     buffer_delete(out);
                     break;
+					
+				case 10: // a client is ready: send it everything on the ground
+				    var k = ds_map_find_first(world_items);
+				    while (!is_undefined(k)) {
+				        var wb = buffer_create(32, buffer_grow, 1);
+				        server_write_spawn(wb, k, world_items[? k]);
+				        network_send_packet(sender, wb, buffer_tell(wb));
+				        buffer_delete(wb);
+				        k = ds_map_find_next(world_items, k);
+				    }
+				    break;
+
+				case 13: // pickup request
+				    var req = buffer_read(buff, buffer_u32);
+				    var w = world_items[? req];
+				    if (!is_undefined(w)) {          // still there? first request wins
+				        ds_map_delete(world_items, req);
+
+				        // the requester gets the contents
+				        var gb = buffer_create(32, buffer_grow, 1);
+				        buffer_write(gb, buffer_u8, 14);
+				        buffer_write(gb, buffer_string, w.item);
+				        buffer_write(gb, buffer_u16, w.amount);
+				        network_send_packet(sender, gb, buffer_tell(gb));
+				        buffer_delete(gb);
+
+				        // everyone removes the object
+				        var rb = buffer_create(8, buffer_grow, 1);
+				        buffer_write(rb, buffer_u8, 12);
+				        buffer_write(rb, buffer_u32, req);
+				        for (var m = 0; m < ds_list_size(clients); m++) {
+				            network_send_packet(clients[| m], rb, buffer_tell(rb));
+				        }
+				        buffer_delete(rb);
+				    }
+				    break;
+
+				case 15: // drop request
+				    var ditem = buffer_read(buff, buffer_string);
+				    var damt = buffer_read(buff, buffer_u16);
+				    var dx = buffer_read(buff, buffer_f32);
+				    var dy = buffer_read(buff, buffer_f32);
+				    server_spawn_item(ditem, damt, dx, dy, true);
+				    break;
 
                 default: // unknown message, skip the rest of this packet
                     buffer_seek(buff, buffer_seek_start, size);

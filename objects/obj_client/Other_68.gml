@@ -52,6 +52,37 @@ switch (async_load[? "type"]) {
 				case 4: // start game
 				    room_goto(rm_game);
 				    break;
+					
+				case 11: // an item appeared on the ground
+				    var sid = buffer_read(buff, buffer_u32);
+				    var sitem = buffer_read(buff, buffer_string);
+				    var samt = buffer_read(buff, buffer_u16);
+				    var sx = buffer_read(buff, buffer_f32);
+				    var sy = buffer_read(buff, buffer_f32);
+
+				    if (room == rm_game && !ds_map_exists(world_pickups, sid)) {
+				        var inst = instance_create_layer(sx, sy, "Instances", global.item_db[$ sitem].obj);
+				        inst.net_id = sid;
+				        inst.amount = samt;
+				        world_pickups[? sid] = inst;
+				    }
+				    break;
+
+				case 12: // an item was picked up by someone
+				    var rid = buffer_read(buff, buffer_u32);
+				    var rinst = world_pickups[? rid];
+				    if (!is_undefined(rinst) && instance_exists(rinst)) {
+				        with (rinst) instance_destroy();
+				    }
+				    ds_map_delete(world_pickups, rid);
+				    break;
+
+				case 14: // the server says: this pickup is yours
+				    var gitem = buffer_read(buff, buffer_string);
+				    var gamt = buffer_read(buff, buffer_u16);
+				    var gleft = inventory_add(gitem, gamt);
+				    if (gleft > 0) drop_item(gitem, gleft);   // bag filled up in the meantime: drop the rest
+				    break;
 
                 default:
                     buffer_seek(buff, buffer_seek_start, size);
