@@ -37,6 +37,9 @@
   "resources":[
     {"id":{"name":"obj_client","path":"objects/obj_client/obj_client.yy",},},
     {"id":{"name":"obj_controller","path":"objects/obj_controller/obj_controller.yy",},},
+    {"id":{"name":"Obj_corruptAphids","path":"objects/Obj_corruptAphids/Obj_corruptAphids.yy",},},
+    {"id":{"name":"Obj_corruptGungler","path":"objects/Obj_corruptGungler/Obj_corruptGungler.yy",},},
+    {"id":{"name":"Obj_corruptMastiff","path":"objects/Obj_corruptMastiff/Obj_corruptMastiff.yy",},},
     {"id":{"name":"obj_inventory","path":"objects/obj_inventory/obj_inventory.yy",},},
     {"id":{"name":"obj_lobby","path":"objects/obj_lobby/obj_lobby.yy",},},
     {"id":{"name":"obj_pickup","path":"objects/obj_pickup/obj_pickup.yy",},},
@@ -47,6 +50,7 @@
     {"id":{"name":"obj_wood","path":"objects/obj_wood/obj_wood.yy",},},
     {"id":{"name":"rm_game","path":"rooms/rm_game/rm_game.yy",},},
     {"id":{"name":"rm_lobby","path":"rooms/rm_lobby/rm_lobby.yy",},},
+    {"id":{"name":"RoomUI","path":"roomui/RoomUI/RoomUI.yy",},},
     {"id":{"name":"inventory_init","path":"scripts/inventory_init/inventory_init.yy",},},
     {"id":{"name":"server_broadcast_lobby","path":"scripts/server_broadcast_lobby/server_broadcast_lobby.yy",},},
     {"id":{"name":"spr_stone","path":"sprites/spr_stone/spr_stone.yy",},},
