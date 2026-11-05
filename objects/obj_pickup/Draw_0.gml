@@ -1,4 +1,5 @@
 draw_self();
+if (view_current == 1) { draw_self(); exit; }
 
 if (near) {
     var pulse = 0.25 + 0.15 * sin(current_time / 200 + glow_t);

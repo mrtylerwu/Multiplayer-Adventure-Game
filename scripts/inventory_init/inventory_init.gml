@@ -112,11 +112,11 @@ function server_init_world() {
         ds_map_clear(world_items);
         next_item_id = 1;
     }
-    var ww = 3200, wh = 3200;   // set these to rm_game's real width and height
+    var ww = 2732, wh = 1536;   // set these to rm_game's real width and height
     repeat (10) {
 	    server_spawn_item("wood", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
 	}
-	repeat (8) {
+	repeat (10) {
 	    server_spawn_item("stone", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
 	}
 }
