@@ -1,5 +1,23 @@
+// Draw
+if (view_current == 1) {
+    // how much the minimap shrinks the world
+    var s = view_wport[1] / camera_get_view_width(view_camera[1]);
+
+    // size you want the icon to appear on the minimap, in minimap pixels
+    var icon = 12 / s;   // converted to world pixels
+
+    var cx = (bbox_left + bbox_right) / 2;
+    var cy = (bbox_top + bbox_bottom) / 2;
+
+    //draw_set_color(c_black);
+    //draw_circle(cx, cy, icon * 0.65, false);    // dark backing so it stands out on grass
+    draw_set_color(c_white);
+    draw_item_icon(item_id, cx, cy, icon, 1);   // the item's own sprite, scaled up
+    exit;
+}
+
 draw_self();
-if (view_current == 1) { draw_self(); exit; }
+//if (view_current == 1) { draw_self(); exit; }
 
 if (near) {
     var pulse = 0.25 + 0.15 * sin(current_time / 200 + glow_t);
