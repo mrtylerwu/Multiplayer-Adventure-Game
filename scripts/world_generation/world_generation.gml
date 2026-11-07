@@ -217,12 +217,13 @@ function world_generate(_seed) {
         random_set_seed(_seed + attempt * 7919);
 
         // this seed's "personality": same seed = same island on every computer
-        var island_layers = [noise_lattice(32), noise_lattice(16), noise_lattice(8)];
-        var pond_layers   = [noise_lattice(14), noise_lattice(7)];
-        var width_layers  = [noise_lattice(20), noise_lattice(10)];   // makes the sand belt wavy
+        var ms = GW / 128;   // 1 on a 128-cell map, 2 on 256, 3 on 384
+		var island_layers = [noise_lattice(32 * ms), noise_lattice(16 * ms), noise_lattice(8 * ms)];
+		var pond_layers   = [noise_lattice(14 * ms), noise_lattice(7 * ms)];
+		var width_layers  = [noise_lattice(20 * ms), noise_lattice(10 * ms)];
         var pond_frac = random_range(0.04, 0.12);   // ponds cover this much of the inland area
         var angle     = random(360);                // which way the island is stretched
-        var stretch   = random_range(0.75, 1.0);    // 1 = round, lower = oval
+        var stretch   = random_range(0.85, 1.0);    // 1 = round, lower = oval
         var wobble    = random_range(0.5, 0.9);     // higher = more ragged coastline
 
         // 1) island shape: stretched falloff + noise, keep the top 40% of cells as land
@@ -233,11 +234,13 @@ function world_generate(_seed) {
                 var dy = gy - GH / 2;
                 var rx = dx * dcos(angle) + dy * dsin(angle);
                 var ry = -dx * dsin(angle) + dy * dcos(angle);
-                var dist = sqrt(rx * rx + sqr(ry / stretch)) / (GW * 0.5);
-                island_score[gy * GW + gx] = (1 - dist) + (noise_fbm(island_layers, gx, gy) - 0.5) * wobble;
+                var dist = sqrt(rx * rx + sqr(ry / stretch)) / (min(GW, GH) * 0.5);
+				var sc = (1 - dist) + (noise_fbm(island_layers, gx, gy) - 0.5) * wobble;
+				if (dist > 0.9) sc = -10;   // no land in the outer ring, so it can never reach the edge
+				island_score[gy * GW + gx] = sc;
             }
         }
-        var thr = percentile_threshold(island_score, 0.40);
+        var thr = percentile_threshold(island_score, 0.45);
         var g = array_create(total, 0);
         for (var i = 0; i < total; i++) {
             if (island_score[i] >= thr) g[i] = 1;
@@ -325,14 +328,25 @@ function world_generate(_seed) {
 
         // 5) sanity check: reject tiny islands and try the next variation
         var land = 0;
-        var grass_count = 0;
-        for (var c = 0; c < total; c++) {
-            if (terrain[c] >= T_SAND) land++;
-            if (terrain[c] == T_GRASS) grass_count++;
-        }
-        global.world_grid = terrain;
-        var center_ok = (terrain[(GH div 2) * GW + (GW div 2)] == T_GRASS);
-		if (land >= total * 0.25 && grass_count >= total * 0.08 && center_ok) break;
+		var grass_count = 0;
+		var sum_x = 0;
+		var sum_y = 0;
+		for (var c = 0; c < total; c++) {
+		    if (terrain[c] >= T_SAND) {
+		        land++;
+		        sum_x += c mod GW;
+		        sum_y += c div GW;
+		    }
+		    if (terrain[c] == T_GRASS) grass_count++;
+		}
+		global.world_grid = terrain;
+
+		var center_ok = (terrain[(GH div 2) * GW + (GW div 2)] == T_GRASS);
+		// how far the island's middle is from the map's middle, in cells
+		var off = point_distance(sum_x / max(land, 1), sum_y / max(land, 1), GW / 2, GH / 2);
+		var centered = (off < GW * 0.05);
+
+		if (land >= total * 0.25 && grass_count >= total * 0.08 && center_ok && centered) break;
     }
     randomize();   // everything after this may be truly random again
 }

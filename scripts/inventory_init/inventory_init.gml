@@ -120,3 +120,28 @@ function server_init_world() {
 	    server_spawn_item("stone", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
 	}
 }
+
+
+
+function tools_init() {
+    global.tool_list = [
+        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 100, swing_time: 20, reach: 96 },
+        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 100, swing_time: 20, reach: 96 },
+        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 100, swing_time: 20, reach: 96 },
+        { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 96 }
+    ];
+    global.tool_selected = -1;
+    global.click_used = false;
+}
+
+// draws a sprite shrunk to fit a square, centered on (_cx, _cy), optionally rotated
+function draw_sprite_fit(_spr, _cx, _cy, _size, _alpha, _angle = 0) {
+    var sw = sprite_get_width(_spr);
+    var sh = sprite_get_height(_spr);
+    var sc = _size / max(sw, sh);
+    var vx = (sw / 2 - sprite_get_xoffset(_spr)) * sc;
+    var vy = (sh / 2 - sprite_get_yoffset(_spr)) * sc;
+    var rx = vx * dcos(_angle) + vy * dsin(_angle);
+    var ry = -vx * dsin(_angle) + vy * dcos(_angle);
+    draw_sprite_ext(_spr, 0, _cx - rx, _cy - ry, sc, sc, _angle, c_white, _alpha);
+}
