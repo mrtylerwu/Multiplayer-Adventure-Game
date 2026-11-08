@@ -106,29 +106,33 @@ function server_spawn_item(_item, _amount, _x, _y, _broadcast) {
 }
 
 // the starting items on the ground, created by the server only
-// CAN DELETE LATER
 function server_init_world() {
     with (obj_server) {
         ds_map_clear(world_items);
         next_item_id = 1;
     }
-    var ww = 8192, wh = 8192;   // set these to rm_game's real width and height
+
+    // wood only on grass
     repeat (10) {
-	    server_spawn_item("wood", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
-	}
-	repeat (10) {
-	    server_spawn_item("stone", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
-	}
+        var p = world_random_land_point(1, T_GRASS);
+        server_spawn_item("wood", irandom_range(1, 3), p.x, p.y, false);
+    }
+
+    // stone anywhere on land (sand or grass)
+    repeat (10) {
+        var p2 = world_random_land_point(1);
+        server_spawn_item("stone", irandom_range(1, 3), p2.x, p2.y, false);
+    }
 }
 
 
 
 function tools_init() {
     global.tool_list = [
-        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 100, swing_time: 20, reach: 96 },
-        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 100, swing_time: 20, reach: 96 },
-        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 100, swing_time: 20, reach: 96 },
-        { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 96 }
+        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 40, swing_time: 20, reach: 60 },
+        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 40, swing_time: 20, reach: 60 },
+        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 40, swing_time: 20, reach: 60 },
+        { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 60 }
     ];
     global.tool_selected = -1;
     global.click_used = false;

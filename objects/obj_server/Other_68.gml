@@ -49,6 +49,24 @@ switch (async_load[? "type"]) {
                     buffer_delete(out);
                     break;
 					
+				case 5: // a player swung a tool: pass it on to everyone else
+				    var swing_tool = buffer_read(buff, buffer_u8);
+				    var swing_aim = buffer_read(buff, buffer_f32);
+				    var swing_sweep = buffer_read(buff, buffer_s8);
+
+				    var swb = buffer_create(16, buffer_grow, 1);
+				    buffer_write(swb, buffer_u8, 6);
+				    buffer_write(swb, buffer_u16, sender);   // who swung
+				    buffer_write(swb, buffer_u8, swing_tool);
+				    buffer_write(swb, buffer_f32, swing_aim);
+				    buffer_write(swb, buffer_s8, swing_sweep);
+				    for (var sw_i = 0; sw_i < ds_list_size(clients); sw_i++) {
+				        var sw_c = clients[| sw_i];
+				        if (sw_c != sender) network_send_packet(sw_c, swb, buffer_tell(swb));
+				    }
+				    buffer_delete(swb);
+				    break;
+					
 				case 10: // a client is ready: send it everything on the ground
 				    var k = ds_map_find_first(world_items);
 				    while (!is_undefined(k)) {

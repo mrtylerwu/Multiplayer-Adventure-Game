@@ -1,4 +1,4 @@
-#macro CELL 32      // tile size in pixels (keep your value)
+#macro CELL 64 //32      // tile size in pixels (keep your value)
 #macro GW 256       // grid width in cells (keep your value)
 #macro GH 256       // grid height in cells (keep your value)
 
@@ -222,9 +222,10 @@ function world_generate(_seed) {
 		var pond_layers   = [noise_lattice(14 * ms), noise_lattice(7 * ms)];
 		var width_layers  = [noise_lattice(20 * ms), noise_lattice(10 * ms)];
         var pond_frac = random_range(0.04, 0.12);   // ponds cover this much of the inland area
-        var angle     = random(360);                // which way the island is stretched
-        var stretch   = random_range(0.85, 1.0);    // 1 = round, lower = oval
-        var wobble    = random_range(0.5, 0.9);     // higher = more ragged coastline
+        var angle     = random_range(-12, 12);      // slight tilt only, a fully random angle would turn a square into a diamond
+		var stretch   = random_range(0.85, 1.0);    // 1 = square, lower = rectangle
+		var sq_p      = random_range(5, 8);         // 2 = circle, 4 = rounded square, 8 = nearly square
+		var wobble    = random_range(0.5, 0.9);     // higher = more ragged coastline
 
         // 1) island shape: stretched falloff + noise, keep the top 40% of cells as land
         var island_score = array_create(total, 0);
@@ -234,13 +235,14 @@ function world_generate(_seed) {
                 var dy = gy - GH / 2;
                 var rx = dx * dcos(angle) + dy * dsin(angle);
                 var ry = -dx * dsin(angle) + dy * dcos(angle);
-                var dist = sqrt(rx * rx + sqr(ry / stretch)) / (min(GW, GH) * 0.5);
+                var half = min(GW, GH) * 0.5;
+				var dist = power(power(abs(rx) / half, sq_p) + power(abs(ry / stretch) / half, sq_p), 1 / sq_p);
 				var sc = (1 - dist) + (noise_fbm(island_layers, gx, gy) - 0.5) * wobble;
-				if (dist > 0.9) sc = -10;   // no land in the outer ring, so it can never reach the edge
+				if (dist > 0.90) sc = -10;   // no land in the outer ring, so it can never reach the edge
 				island_score[gy * GW + gx] = sc;
             }
         }
-        var thr = percentile_threshold(island_score, 0.45);
+        var thr = percentile_threshold(island_score, 0.60);
         var g = array_create(total, 0);
         for (var i = 0; i < total; i++) {
             if (island_score[i] >= thr) g[i] = 1;
@@ -250,13 +252,13 @@ function world_generate(_seed) {
 		// the middle of the map is always land (the spawn area)
 		for (var cy0 = 0; cy0 < GH; cy0++) {
 		    for (var cx0 = 0; cx0 < GW; cx0++) {
-		        if (point_distance(cx0, cy0, GW / 2, GH / 2) <= 8) g[cy0 * GW + cx0] = 1;
+		        if (point_distance(cx0, cy0, GW / 2, GH / 2) <= 4) g[cy0 * GW + cx0] = 1;
 		    }
 		}
 
         // 2) ponds, only well inland (6 cells from the sea)
         var inland = g;
-        repeat (6) inland = grid_erode(inland);
+        repeat (3) inland = grid_erode(inland);
         var pond_noise = array_create(total, 0);
         var pond_values = [];
         for (var pcy = 0; pcy < GH; pcy++) {
@@ -272,7 +274,7 @@ function world_generate(_seed) {
             var pthr = percentile_threshold(pond_values, pond_frac);
             for (var pj = 0; pj < total; pj++) {
 			    // no ponds within 14 cells of the center
-			    var far_from_center = point_distance(pj mod GW, pj div GW, GW / 2, GH / 2) > 14;
+			    var far_from_center = point_distance(pj mod GW, pj div GW, GW / 2, GH / 2) > 7;
 			    if (inland[pj] == 1 && pond_noise[pj] >= pthr && far_from_center) g[pj] = 0;
 			}
         }
@@ -296,8 +298,8 @@ function world_generate(_seed) {
                 var ti = ty * GW + tx;
                 if (g[ti] == 0) continue;
                 var wv = clamp((noise_fbm(width_layers, tx, ty) - 0.3) * 2.5, 0, 1);
-                var coast_w = lerp(3, 7, wv);     // sand belt along the sea: 3 to 7 cells
-                var pond_w  = lerp(1, 2.2, wv);   // thinner belt around ponds: 1 to 2 cells
+                var coast_w = lerp(2, 4, wv);     // sand belt along the sea: 2 to 4 cells
+                var pond_w  = lerp(1, 1.5, wv);   // thinner belt around ponds: 1 to 1.5 cells
                 if (d_ocean[ti] <= coast_w || d_pond[ti] <= pond_w) terrain[ti] = T_SAND;
                 else terrain[ti] = T_GRASS;
             }
@@ -403,6 +405,7 @@ function world_build_tiles() {
     var grass_layer = layer_create(80, "TerrainGrass");
     var sand_map  = layer_tilemap_create(sand_layer, 0, 0, ts_sand, GW, GH);
     var grass_map = layer_tilemap_create(grass_layer, 0, 0, ts_grass, GW, GH);
+	
 
     for (var gy = 0; gy < GH; gy++) {
         for (var gx = 0; gx < GW; gx++) {
@@ -412,9 +415,44 @@ function world_build_tiles() {
         }
     }
 }
+/*
+function world_build_tiles() {
+    var g = global.world_grid;
+    var sand_layer  = layer_create(90, "TerrainSand");
+    var grass_layer = layer_create(80, "TerrainGrass");
+    var sand_map  = layer_tilemap_create(sand_layer, 0, 0, ts_sand, GW, GH);
+    var grass_map = layer_tilemap_create(grass_layer, 0, 0, ts_grass, GW, GH);
+
+    // land never touches the outer 2 cells of the grid, so neighbours can be read without bounds checks
+    for (var gy = 1; gy < GH - 1; gy++) {
+        for (var gx = 1; gx < GW - 1; gx++) {
+            var i = gy * GW + gx;
+            var t = g[i];
+            if (t == T_WATER) continue;
+
+            var ms = 1;
+            if (g[i - GW] >= T_SAND) ms += 1;
+            if (g[i + 1]  >= T_SAND) ms += 2;
+            if (g[i + GW] >= T_SAND) ms += 4;
+            if (g[i - 1]  >= T_SAND) ms += 8;
+            tilemap_set(sand_map, ms, gx, gy);
+
+            if (t == T_GRASS) {
+                var mg = 1;
+                if (g[i - GW] == T_GRASS) mg += 1;
+                if (g[i + 1]  == T_GRASS) mg += 2;
+                if (g[i + GW] == T_GRASS) mg += 4;
+                if (g[i - 1]  == T_GRASS) mg += 8;
+                tilemap_set(grass_map, mg, gx, gy);
+            }
+        }
+    }
+}
+*/
+
 
 // a grass cell near the middle of the map. returns { x, y } in pixels
-function world_spawn_point(_spread = 4) {
+function world_spawn_point(_spread = 2) {
     var mx = GW div 2;
     var my = GH div 2;
 
@@ -437,4 +475,46 @@ function world_spawn_point(_spread = 4) {
         }
     }
     return { x: GW * CELL / 2, y: GH * CELL / 2 };
+}
+
+// a random point that is within _max_px of land, but may be in shallow water. returns { x, y }
+function world_random_point_near_land(_max_px) {
+    var reach = ceil(_max_px / CELL);
+    for (var tries = 0; tries < 2000; tries++) {
+        var gx = irandom_range(2, GW - 3);
+        var gy = irandom_range(2, GH - 3);
+        for (var oy = -reach; oy <= reach; oy++) {
+            for (var ox = -reach; ox <= reach; ox++) {
+                if (world_land_at_cell(gx + ox, gy + oy)) {
+                    return { x: gx * CELL + irandom(CELL - 1), y: gy * CELL + irandom(CELL - 1) };
+                }
+            }
+        }
+    }
+    return world_random_land_point(1);
+}
+
+
+#macro MM_STEP 2   // one minimap pixel per 2x2 cells, which keeps it fast
+
+// draws the whole island once into a small picture. returns a sprite
+function minimap_build() {
+    var mw = GW div MM_STEP;
+    var mh = GH div MM_STEP;
+    var surf = surface_create(mw, mh);
+    surface_set_target(surf);
+    draw_clear_alpha(c_black, 0);
+    for (var py = 0; py < mh; py++) {
+        for (var px = 0; px < mw; px++) {
+            var t = world_terrain_at_cell(px * MM_STEP, py * MM_STEP);
+            var col = make_colour_rgb(64, 140, 200);                 // water
+            if (t == T_SAND)  col = make_colour_rgb(228, 208, 140);
+            if (t == T_GRASS) col = make_colour_rgb(94, 158, 70);
+            draw_point_colour(px, py, col);
+        }
+    }
+    surface_reset_target();
+    var spr = sprite_create_from_surface(surf, 0, 0, mw, mh, false, false, 0, 0);
+    surface_free(surf);
+    return spr;
 }

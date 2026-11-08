@@ -6,6 +6,8 @@ bar_x = 0;
 bar_y = 0;
 swing_dir = 1;     // flips each swing so they alternate direction
 
+my_swing = noone;   // the swing object that belongs to you
+
 update_layout = function() {
     var n = array_length(global.tool_list);
     var total_w = n * slot_size + (n - 1) * gap;

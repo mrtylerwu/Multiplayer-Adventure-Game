@@ -7,6 +7,9 @@ if (!variable_global_exists("world_grid")) {
 
 world_build_tiles();
 
+if (variable_global_exists("minimap")) sprite_delete(global.minimap);
+global.minimap = minimap_build();
+
 if (instance_exists(obj_player)) {
     var p = world_spawn_point();
     obj_player.x = p.x;

@@ -10,11 +10,15 @@ if (keyboard_check_pressed(vk_f1) && idle) {          // host
 if (keyboard_check_pressed(vk_f2) && !instance_exists(obj_client)) {   // join
     instance_create_layer(0, 0, "Instances", obj_client);
 }
-if (keyboard_check_pressed(vk_enter) && instance_exists(obj_server)) { // start
-    server_init_world();
-	with (obj_server) {
-        var b = buffer_create(4, buffer_grow, 1);
+if (keyboard_check_pressed(vk_enter) && instance_exists(obj_server)) {
+    global.world_seed = irandom(999999);
+    world_generate(global.world_seed);   // 1) build the island first
+    server_init_world();                 // 2) then place the starting items on it
+
+    with (obj_server) {                  // 3) tell everyone to start, including the seed
+        var b = buffer_create(8, buffer_grow, 1);
         buffer_write(b, buffer_u8, 4);
+        buffer_write(b, buffer_u32, global.world_seed);
         for (var i = 0; i < ds_list_size(clients); i++) network_send_packet(clients[| i], b, buffer_tell(b));
         buffer_delete(b);
     }

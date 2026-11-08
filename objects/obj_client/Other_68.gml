@@ -50,7 +50,25 @@ switch (async_load[? "type"]) {
 				    break;
 
 				case 4: // start game
+				    global.world_seed = buffer_read(buff, buffer_u32);
+				    world_generate(global.world_seed);
 				    room_goto(rm_game);
+				    break;
+					
+				case 6: // someone else swung a tool
+				    var spid = buffer_read(buff, buffer_u16);
+				    var stool = buffer_read(buff, buffer_u8);
+				    var saim = buffer_read(buff, buffer_f32);
+				    var ssweep = buffer_read(buff, buffer_s8);
+
+				    var rp = remote_players[? spid];
+				    if (!is_undefined(rp) && instance_exists(rp) && stool < array_length(global.tool_list)) {
+				        var sw = instance_create_layer(rp.x, rp.y, "Instances", obj_swing);
+				        sw.owner = rp.id;      // the swing follows that player's character
+				        sw.tool = stool;
+				        sw.aim = saim;
+				        sw.sweep = ssweep;
+				    }
 				    break;
 					
 				case 11: // an item appeared on the ground
