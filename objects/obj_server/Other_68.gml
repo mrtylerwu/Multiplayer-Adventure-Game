@@ -96,6 +96,16 @@ switch (async_load[? "type"]) {
 				        buffer_delete(wb);
 				        k = ds_map_find_next(world_items, k);
 				    }
+					// Send all existing enemies to the newly ready client
+					var ek = ds_map_find_first(world_enemies);
+					while (!is_undefined(ek)) {
+						var eb = buffer_create(32, buffer_grow, 1);
+						server_write_enemy_spawn(eb, ek, world_enemies[? ek]);
+						network_send_packet(sender, eb, buffer_tell(eb));
+						buffer_delete(eb);
+						ek = ds_map_find_next(world_enemies, ek);
+						}
+
 					var pk = ds_map_find_first(positions);
 				    while (!is_undefined(pk)) {
 				        if (pk != sender) {

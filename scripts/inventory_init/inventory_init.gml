@@ -106,11 +106,64 @@ function server_spawn_item(_item, _amount, _x, _y, _broadcast) {
     }
 }
 
+
+function server_write_enemy_spawn(_b, _eid, _e) {
+    buffer_write(_b, buffer_u8, 16); // 16 = enemy spawn
+    buffer_write(_b, buffer_u32, _eid);
+    buffer_write(_b, buffer_string, _e.enemy_type);
+    buffer_write(_b, buffer_f32, _e.x);
+    buffer_write(_b, buffer_f32, _e.y);
+}
+
+
+// Create and register an enemy on the server
+function server_spawn_enemy(_enemy_type, _x, _y, _broadcast) {
+    with (obj_server) {
+        if (ds_map_size(world_enemies) < max_enemies) {
+            var eid = next_enemy_id;
+            next_enemy_id++;
+
+            var e = {
+                enemy_type: _enemy_type,
+                x: _x,
+                y: _y
+            };
+
+            world_enemies[? eid] = e;
+
+            // Tell all connected clients about the enemy
+            if (_broadcast) {
+                var b = buffer_create(32, buffer_grow, 1);
+                server_write_enemy_spawn(b, eid, e);
+
+                for (var i = 0; i < ds_list_size(clients); i++) {
+                    network_send_packet(clients[| i], b, buffer_tell(b));
+                }
+
+                buffer_delete(b);
+            }
+        }
+    }
+}
+
+
+// Spawn the starting enemies
+function server_init_enemies() {
+    repeat (5) {
+        var p = world_random_land_point(1);
+
+        server_spawn_enemy("aphid", p.x, p.y, false);
+    }
+}
+
 // the starting items on the ground, created by the server only
 function server_init_world() {
     with (obj_server) {
         ds_map_clear(world_items);
         next_item_id = 1;
+		
+		ds_map_clear(world_enemies);
+		next_enemy_id = 1;
     }
 
     // wood only on grass

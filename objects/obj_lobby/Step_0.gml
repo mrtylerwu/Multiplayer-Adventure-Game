@@ -35,9 +35,11 @@ if (keyboard_check_pressed(vk_f2) && idle) {
 // Enter = start (host only)
 if (keyboard_check_pressed(vk_enter) && instance_exists(obj_server)) {
     global.world_seed = irandom(999999);
-    world_generate(global.world_seed);
-    server_init_world();
-    with (obj_server) {
+    world_generate(global.world_seed);   // 1) build the island first
+    server_init_world();	// 2) then place the starting items on it
+	server_init_enemies(); // 2) Spawn Enemies
+
+    with (obj_server) {                  // 3) tell everyone to start, including the seed
         var b = buffer_create(8, buffer_grow, 1);
         buffer_write(b, buffer_u8, 4);
         buffer_write(b, buffer_u32, global.world_seed);

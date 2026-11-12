@@ -20,6 +20,16 @@ edge_margin = CELL * 3;
 last_x = x;
 last_y = y;
 
+
+// Step, replacing the send block
+if ((x != last_x || y != last_y) && instance_exists(obj_client)) {
+    // ...send code...
+    last_x = x;
+    last_y = y;
+}
+
+damage_cooldown = 1.5; // Seconds of protection
+damage_timer = 0;
 // health
 //health = 100;
 hp_max = 100;

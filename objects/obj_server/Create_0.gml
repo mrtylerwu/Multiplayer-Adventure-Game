@@ -7,5 +7,12 @@ names = ds_map_create();
 
 world_items = ds_map_create();   // net_id -> { item, amount, x, y }
 next_item_id = 1;
+
+// Enemy tracking
+world_enemies = ds_map_create();
+next_enemy_id = 1;
+
+// Enemy spawning settings
+max_enemies = 10;
 positions = ds_map_create();   // socket -> [x, y], where each player last was
 healths = ds_map_create();   // socket -> [hp, hp_max]

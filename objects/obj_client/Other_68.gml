@@ -104,6 +104,22 @@ switch (async_load[? "type"]) {
 				        world_pickups[? sid] = inst;
 				    }
 				    break;
+					
+				case 16: // an enemy appeared
+					var eid = buffer_read(buff, buffer_u32);
+					var etype = buffer_read(buff, buffer_string);
+					var ex = buffer_read(buff, buffer_f32);
+					var ey = buffer_read(buff, buffer_f32);
+					
+					if (room == rm_game && !ds_map_exists(world_enemies, eid)) {
+						if (etype == "aphid") {
+							var enemy = instance_create_layer(ex,ey,"Instances",Obj_corruptAphids);
+							enemy.net_id = eid;
+							world_enemies[? eid] = enemy;
+						}
+					}
+					break;
+
 
 				case 12: // an item was picked up by someone
 				    var rid = buffer_read(buff, buffer_u32);
