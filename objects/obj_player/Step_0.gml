@@ -1,4 +1,5 @@
-// obj_player Step event
+if (hurt_timer > 0) hurt_timer--;
+
 // Read input
 var h = keyboard_check(ord("D")) - keyboard_check(ord("A"));
 var v = keyboard_check(ord("S")) - keyboard_check(ord("W"));
@@ -13,31 +14,28 @@ if (len > 0) {
 // ---- speed and stamina ----
 var moving = can_move && (h != 0 || v != 0);
 
-// running out of stamina locks sprinting until some comes back
 if (staminaBar <= 0) exhausted = true;
 if (staminaBar >= stamina_recover) exhausted = false;
 
 var sprinting = keyboard_check(vk_shift) && moving && !exhausted;
-
 current_speed = sprinting ? a_speed : move_speed;
 
-// water has its own walking and running speeds
 var feet_x = (bbox_left + bbox_right) / 2;
 in_water = !world_land_at_px(feet_x, bbox_bottom);
 if (in_water) current_speed = sprinting ? water_run_speed : water_walk_speed;
 
-// drain while sprinting, otherwise refill (slower while moving)
 if (sprinting) staminaBar -= stamina_drain;
 else if (moving) staminaBar += stamina_regen_moving;
 else staminaBar += stamina_regen_idle;
 staminaBar = clamp(staminaBar, 0, stamina_max);
 
+// ---- movement (trees and rocks block you) ----
 if (can_move == true) {
     // Horizontal movement
     if (h != 0) {
         var dx = h * current_speed;
         hit_h = instance_place(x + dx, y, all);
-        if ((hit_h == noone || !hit_h.solid) && bbox_left + dx >= 0 && bbox_right + dx < room_width) {
+        if (!place_meeting(x + dx, y, obj_resource) && (hit_h == noone || !hit_h.solid) && bbox_left + dx >= 0 && bbox_right + dx < room_width) {
             x += dx;
         }
     }
@@ -46,7 +44,7 @@ if (can_move == true) {
     if (v != 0) {
         var dy = v * current_speed;
         hit_v = instance_place(x, y + dy, all);
-        if ((hit_v == noone || !hit_v.solid) && bbox_top + dy >= 0 && bbox_bottom + dy < room_height) {
+        if (!place_meeting(x, y + dy, obj_resource) && (hit_v == noone || !hit_v.solid) && bbox_top + dy >= 0 && bbox_bottom + dy < room_height) {
             y += dy;
         }
     }
@@ -57,11 +55,10 @@ var left_off   = x - bbox_left;
 var right_off  = bbox_right - x;
 var top_off    = y - bbox_top;
 var bottom_off = bbox_bottom - y;
-
 x = clamp(x, edge_margin + left_off,  room_width  - edge_margin - right_off);
 y = clamp(y, edge_margin + top_off,   room_height - edge_margin - bottom_off);
 
-// Send position to the server
+// send position to the server (once at the start, then only when it changes)
 if ((!sent_start || x != last_x || y != last_y) && instance_exists(obj_client)) {
     sent_start = true;
     var b = buffer_create(16, buffer_grow, 1);
@@ -89,3 +86,5 @@ if (hp != last_hp && instance_exists(obj_client)) {
 // TEMPORARY test keys, delete once real damage exists: K = take 10, L = heal 10
 //if (keyboard_check_pressed(ord("K"))) hp -= 10;
 //if (keyboard_check_pressed(ord("L"))) hp += 10;
+
+depth = -bbox_bottom;   // lower on screen = drawn in front, so you can stand behind a tree

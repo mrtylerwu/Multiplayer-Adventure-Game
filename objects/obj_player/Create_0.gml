@@ -1,7 +1,7 @@
 // Create
 // movement
-move_speed = 3;           // normal walking speed
-a_speed = 5;              // sprint speed
+move_speed = 3.5;           // normal walking speed
+a_speed = 4.5;              // sprint speed
 current_speed = move_speed;
 can_move = true;
 //staminaBar = 100;
@@ -25,7 +25,7 @@ last_y = y;
 hp_max = 100;
 hp = hp_max;
 last_hp = -1;      // forces one send on the first frame
-
+hurt_timer = 0;   // red flash when hit
 
 // stamina
 stamina_max = 100;

@@ -399,6 +399,17 @@ function world_edge_mask(_gx, _gy, _level) {
     return m;
 }
 
+
+// sends one message to every connected client
+function server_broadcast(_b) {
+    with (obj_server) {
+        for (var i = 0; i < ds_list_size(clients); i++) {
+            network_send_packet(clients[| i], _b, buffer_tell(_b));
+        }
+    }
+}
+
+
 function world_build_tiles() {
     // depths 90 and 80 are in front of the room's Background layer (100) and behind your instances (0)
     var sand_layer  = layer_create(90, "TerrainSand");
@@ -415,6 +426,7 @@ function world_build_tiles() {
         }
     }
 }
+
 /*
 function world_build_tiles() {
     var g = global.world_grid;
