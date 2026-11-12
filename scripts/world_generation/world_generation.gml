@@ -242,7 +242,7 @@ function world_generate(_seed) {
 				island_score[gy * GW + gx] = sc;
             }
         }
-        var thr = percentile_threshold(island_score, 0.60);
+        var thr = percentile_threshold(island_score, 0.65);
         var g = array_create(total, 0);
         for (var i = 0; i < total; i++) {
             if (island_score[i] >= thr) g[i] = 1;
@@ -298,8 +298,8 @@ function world_generate(_seed) {
                 var ti = ty * GW + tx;
                 if (g[ti] == 0) continue;
                 var wv = clamp((noise_fbm(width_layers, tx, ty) - 0.3) * 2.5, 0, 1);
-                var coast_w = lerp(2, 4, wv);     // sand belt along the sea: 2 to 4 cells
-                var pond_w  = lerp(1, 1.5, wv);   // thinner belt around ponds: 1 to 1.5 cells
+                var coast_w = lerp(2, 5, wv);     // sand belt along the sea: 2 to 4 cells
+                var pond_w  = lerp(1, 2, wv);   // thinner belt around ponds: 1 to 1.5 cells
                 if (d_ocean[ti] <= coast_w || d_pond[ti] <= pond_w) terrain[ti] = T_SAND;
                 else terrain[ti] = T_GRASS;
             }

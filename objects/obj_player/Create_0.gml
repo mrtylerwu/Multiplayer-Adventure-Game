@@ -14,7 +14,7 @@ water_walk_speed = 1.5;   // walking in water
 water_run_speed  = 2.0;   // running in water
 
 // keeps the player inside the map
-edge_margin = CELL * 3;
+edge_margin = CELL * 1.5;
 
 // used to send your position only when it changes
 last_x = x;

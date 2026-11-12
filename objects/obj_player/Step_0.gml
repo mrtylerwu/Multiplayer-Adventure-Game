@@ -57,6 +57,8 @@ var top_off    = y - bbox_top;
 var bottom_off = bbox_bottom - y;
 x = clamp(x, edge_margin + left_off,  room_width  - edge_margin - right_off);
 y = clamp(y, edge_margin + top_off,   room_height - edge_margin - bottom_off);
+//x = clamp(x, 32, 12256);
+//y = clamp(y, 32, 12256);
 
 // send position to the server (once at the start, then only when it changes)
 if ((!sent_start || x != last_x || y != last_y) && instance_exists(obj_client)) {
