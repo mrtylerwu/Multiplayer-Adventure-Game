@@ -78,7 +78,6 @@ if (damage_timer > 0)
 }
     last_x = x;
     last_y = y;
-}
 
 // keep health in range, and tell the server whenever it changes
 hp = clamp(hp, 0, hp_max);

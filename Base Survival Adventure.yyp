@@ -45,6 +45,7 @@
     {"id":{"name":"Obj_corruptGungler","path":"objects/Obj_corruptGungler/Obj_corruptGungler.yy",},},
     {"id":{"name":"Obj_corruptMastiff","path":"objects/Obj_corruptMastiff/Obj_corruptMastiff.yy",},},
     {"id":{"name":"obj_fishing_rod","path":"objects/obj_fishing_rod/obj_fishing_rod.yy",},},
+    {"id":{"name":"Obj_healthBar","path":"objects/Obj_healthBar/Obj_healthBar.yy",},},
     {"id":{"name":"obj_hud","path":"objects/obj_hud/obj_hud.yy",},},
     {"id":{"name":"obj_inventory","path":"objects/obj_inventory/obj_inventory.yy",},},
     {"id":{"name":"obj_lobby","path":"objects/obj_lobby/obj_lobby.yy",},},
