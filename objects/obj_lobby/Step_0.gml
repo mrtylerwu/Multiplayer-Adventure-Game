@@ -13,7 +13,8 @@ if (keyboard_check_pressed(vk_f2) && !instance_exists(obj_client)) {   // join
 if (keyboard_check_pressed(vk_enter) && instance_exists(obj_server)) {
     global.world_seed = irandom(999999);
     world_generate(global.world_seed);   // 1) build the island first
-    server_init_world();                 // 2) then place the starting items on it
+    server_init_world();	// 2) then place the starting items on it
+	server_init_enemies(); // 2) Spawn Enemies
 
     with (obj_server) {                  // 3) tell everyone to start, including the seed
         var b = buffer_create(8, buffer_grow, 1);

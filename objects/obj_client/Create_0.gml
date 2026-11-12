@@ -9,3 +9,4 @@ async_count = 0;
 last_type = -1;
 
 world_pickups = ds_map_create();   // net_id -> the object showing it
+world_enemies = ds_map_create();   // enemy_id -> the enemy instance
