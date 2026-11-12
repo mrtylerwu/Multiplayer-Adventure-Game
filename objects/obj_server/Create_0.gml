@@ -12,3 +12,10 @@ res_gone = ds_list_create();      // ids of trees and rocks that were cut down
 packets_received = 0;
 async_count = 0;
 last_type = -1;
+
+// Enemy tracking
+world_enemies = ds_map_create();
+next_enemy_id = 1;
+
+// Enemy spawning settings
+max_enemies = 10;

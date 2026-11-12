@@ -23,7 +23,7 @@ switch (async_load[? "type"]) {
             last_msg = "msg " + string(msg_id);   // debug
 
             switch (msg_id) {
-
+				    
                 case 2: // another player moved
                     var pid = buffer_read(buff, buffer_u16);
                     var px = buffer_read(buff, buffer_f32);
@@ -69,7 +69,7 @@ switch (async_load[? "type"]) {
                     var rp = remote_players[? spid];
                     if (!is_undefined(rp) && instance_exists(rp) && stool < array_length(global.tool_list)) {
                         var sw = instance_create_layer(rp.x, rp.y, "Instances", obj_swing);
-                        sw.owner = rp.id;      // the swing follows that player's character
+                        sw.owner = rp.id;
                         sw.tool = stool;
                         sw.aim = saim;
                         sw.sweep = ssweep;
@@ -117,7 +117,22 @@ switch (async_load[? "type"]) {
                     var gitem = buffer_read(buff, buffer_string);
                     var gamt = buffer_read(buff, buffer_u16);
                     var gleft = inventory_add(gitem, gamt);
-                    if (gleft > 0) drop_item(gitem, gleft);   // bag filled up in the meantime: drop the rest
+                    if (gleft > 0) drop_item(gitem, gleft);
+                    break;
+
+                case 16: // an enemy appeared
+                    var eid = buffer_read(buff, buffer_u32);
+                    var etype = buffer_read(buff, buffer_string);
+                    var ex = buffer_read(buff, buffer_f32);
+                    var ey = buffer_read(buff, buffer_f32);
+
+                    if (room == rm_game && !ds_map_exists(world_enemies, eid)) {
+                        if (etype == "aphid") {
+                            var enemy = instance_create_layer(ex, ey, "Instances", Obj_corruptAphids);
+                            enemy.net_id = eid;
+                            world_enemies[? eid] = enemy;
+                        }
+                    }
                     break;
 
                 case 17: // you got hit by another player
