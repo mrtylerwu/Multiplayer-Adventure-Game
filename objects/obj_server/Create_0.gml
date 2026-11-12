@@ -7,3 +7,5 @@ names = ds_map_create();
 
 world_items = ds_map_create();   // net_id -> { item, amount, x, y }
 next_item_id = 1;
+positions = ds_map_create();   // socket -> [x, y], where each player last was
+healths = ds_map_create();   // socket -> [hp, hp_max]
