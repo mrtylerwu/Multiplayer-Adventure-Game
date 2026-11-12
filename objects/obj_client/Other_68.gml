@@ -32,7 +32,13 @@ switch (async_load[? "type"]) {
 				    var inst = remote_players[? pid];
 				    if (is_undefined(inst) || !instance_exists(inst)) {
 				        inst = instance_create_layer(px, py, "Instances", obj_remote_player);
+				        inst.net_pid = pid;
 				        remote_players[? pid] = inst;
+				        var ph = pending_hp[? pid];
+				        if (!is_undefined(ph)) {
+				            inst.hp = ph[0];
+				            inst.hp_max = ph[1];
+				        }
 				    }
 				    inst.target_x = px;
 				    inst.target_y = py;
@@ -68,6 +74,19 @@ switch (async_load[? "type"]) {
 				        sw.tool = stool;
 				        sw.aim = saim;
 				        sw.sweep = ssweep;
+				    }
+				    break;
+					
+				case 8: // another player's health
+				    var hpid = buffer_read(buff, buffer_u16);
+				    var hhp = buffer_read(buff, buffer_u16);
+				    var hmax = buffer_read(buff, buffer_u16);
+				    var hinst = remote_players[? hpid];
+				    if (!is_undefined(hinst) && instance_exists(hinst)) {
+				        hinst.hp = hhp;
+				        hinst.hp_max = hmax;
+				    } else {
+				        pending_hp[? hpid] = [hhp, hmax];
 				    }
 				    break;
 					

@@ -14,3 +14,5 @@ next_enemy_id = 1;
 
 // Enemy spawning settings
 max_enemies = 10;
+positions = ds_map_create();   // socket -> [x, y], where each player last was
+healths = ds_map_create();   // socket -> [hp, hp_max]

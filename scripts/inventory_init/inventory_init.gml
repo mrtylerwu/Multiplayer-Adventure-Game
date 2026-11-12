@@ -2,7 +2,8 @@ function inventory_init() {
     // every item type in the game is defined here
     global.item_db = {
         wood: { name: "Wood", sprite: spr_wood, obj: obj_wood, max_stack: 20 },
-		stone: { name: "Stone", sprite: spr_stone, obj: obj_stone, max_stack: 20 }
+		stone: { name: "Stone", sprite: spr_stone, obj: obj_stone, max_stack: 20 },
+		medkit: { name: "Medkit", sprite: spr_medkit, obj: obj_medkit, max_stack: 1 }
     };
     global.inv_cols = 6;
     global.inv_rows = 4;
@@ -182,9 +183,9 @@ function server_init_world() {
 
 function tools_init() {
     global.tool_list = [
-        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 40, swing_time: 20, reach: 60 },
-        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 40, swing_time: 20, reach: 60 },
-        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 40, swing_time: 20, reach: 60 },
+        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 60 },
+        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 60 },
+        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 60 },
         { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 60 }
     ];
     global.tool_selected = -1;
