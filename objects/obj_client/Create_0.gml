@@ -11,12 +11,8 @@ connected = -1;
 // debug values: the old debug Draw GUI reads these. safe to delete along with it
 last_msg = "none";
 async_count = 0;
-<<<<<<< HEAD
 last_type = -1;
 
 world_pickups = ds_map_create();   // net_id -> the object showing it
 world_enemies = ds_map_create();   // enemy_id -> the enemy instance
 pending_hp = ds_map_create();   // health that arrived before that player's character existed
-=======
-last_type = -1;
->>>>>>> origin/main

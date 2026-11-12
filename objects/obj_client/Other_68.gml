@@ -60,7 +60,6 @@ switch (async_load[? "type"]) {
                     room_goto(rm_game);
                     break;
 
-<<<<<<< HEAD
 				    if (room == rm_game && !ds_map_exists(world_pickups, sid)) {
 				        var inst = instance_create_layer(sx, sy, "Instances", global.item_db[$ sitem].obj);
 				        inst.net_id = sid;
@@ -84,13 +83,11 @@ switch (async_load[? "type"]) {
 					}
 					break;
 
-=======
                 case 6: // someone else swung a tool
                     var spid = buffer_read(buff, buffer_u16);
                     var stool = buffer_read(buff, buffer_u8);
                     var saim = buffer_read(buff, buffer_f32);
                     var ssweep = buffer_read(buff, buffer_s8);
->>>>>>> origin/main
 
                     var rp = remote_players[? spid];
                     if (!is_undefined(rp) && instance_exists(rp) && stool < array_length(global.tool_list)) {

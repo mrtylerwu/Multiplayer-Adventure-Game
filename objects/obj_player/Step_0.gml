@@ -91,8 +91,5 @@ if (hp != last_hp && instance_exists(obj_client)) {
 // TEMPORARY test keys, delete once real damage exists: K = take 10, L = heal 10
 //if (keyboard_check_pressed(ord("K"))) hp -= 10;
 //if (keyboard_check_pressed(ord("L"))) hp += 10;
-<<<<<<< HEAD
-=======
 
 depth = -bbox_bottom;   // lower on screen = drawn in front, so you can stand behind a tree
->>>>>>> origin/main

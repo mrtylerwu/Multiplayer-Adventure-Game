@@ -96,13 +96,10 @@
     {"id":{"name":"spr_water","path":"sprites/spr_water/spr_water.yy",},},
     {"id":{"name":"spr_wood","path":"sprites/spr_wood/spr_wood.yy",},},
     {"id":{"name":"Sprite1","path":"sprites/Sprite1/Sprite1.yy",},},
-<<<<<<< HEAD
-    {"id":{"name":"Sprite4","path":"sprites/Sprite4/Sprite4.yy",},},
-    {"id":{"name":"Sprite5","path":"sprites/Sprite5/Sprite5.yy",},},
-=======
     {"id":{"name":"Sprite15","path":"sprites/Sprite15/Sprite15.yy",},},
     {"id":{"name":"Sprite16","path":"sprites/Sprite16/Sprite16.yy",},},
->>>>>>> origin/main
+    {"id":{"name":"Sprite4","path":"sprites/Sprite4/Sprite4.yy",},},
+    {"id":{"name":"Sprite5","path":"sprites/Sprite5/Sprite5.yy",},},
     {"id":{"name":"ts_grass","path":"tilesets/ts_grass/ts_grass.yy",},},
     {"id":{"name":"ts_sand","path":"tilesets/ts_sand/ts_sand.yy",},},
   ],

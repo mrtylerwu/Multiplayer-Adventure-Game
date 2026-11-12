@@ -55,16 +55,16 @@ switch (async_load[? "type"]) {
                     var swing_aim = buffer_read(buff, buffer_f32);
                     var swing_sweep = buffer_read(buff, buffer_s8);
 
-				    var hrb = buffer_create(16, buffer_grow, 1);
-				    buffer_write(hrb, buffer_u8, 8);
-				    buffer_write(hrb, buffer_u16, sender);
-				    buffer_write(hrb, buffer_u16, hp_new);
-				    buffer_write(hrb, buffer_u16, hpm_new);
-				    for (var hr_i = 0; hr_i < ds_list_size(clients); hr_i++) {
-				        var hr_c = clients[| hr_i];
-				        if (hr_c != sender) network_send_packet(hr_c, hrb, buffer_tell(hrb));
+				    var swb = buffer_create(16, buffer_grow, 1);
+				    buffer_write(swb, buffer_u8, 8);
+				    buffer_write(swb, buffer_u16, sender);
+				    buffer_write(swb, buffer_f32, swing_aim);
+				    buffer_write(swb, buffer_s8, swing_sweep);
+				    for (var sw_i = 0; sw_i < ds_list_size(clients); sw_i++) {
+				        var sw_c = clients[| sw_i];
+				        if (sw_c != sender) network_send_packet(sw_c, swb, buffer_tell(swb));
 				    }
-				    buffer_delete(hrb);
+				    buffer_delete(swb);
 				    break;
 					
 				case 10: // a client is ready: send it everything on the ground
@@ -114,19 +114,9 @@ switch (async_load[? "type"]) {
 					    }
 					    hk = ds_map_find_next(healths, hk);
 					}
+					// Send existing resource states to the newly connected client
+					server_send_resource_state(sender);
 				    break;
-                    var swb = buffer_create(16, buffer_grow, 1);
-                    buffer_write(swb, buffer_u8, 6);
-                    buffer_write(swb, buffer_u16, sender);
-                    buffer_write(swb, buffer_u8, swing_tool);
-                    buffer_write(swb, buffer_f32, swing_aim);
-                    buffer_write(swb, buffer_s8, swing_sweep);
-                    for (var sw_i = 0; sw_i < ds_list_size(clients); sw_i++) {
-                        var sw_c = clients[| sw_i];
-                        if (sw_c != sender) network_send_packet(sw_c, swb, buffer_tell(swb));
-                    }
-                    buffer_delete(swb);
-                    break;
 
                 case 7: // a player's health changed: remember it and tell everyone else
                     var h7_hp = buffer_read(buff, buffer_u16);
@@ -143,53 +133,6 @@ switch (async_load[? "type"]) {
                         if (h7_c != sender) network_send_packet(h7_c, h7_b, buffer_tell(h7_b));
                     }
                     buffer_delete(h7_b);
-                    break;
-
-                case 10: // a client finished loading rm_game: send it everything that's already happened
-                    // items on the ground
-                    var it_k = ds_map_find_first(world_items);
-                    while (!is_undefined(it_k)) {
-                        var it_b = buffer_create(32, buffer_grow, 1);
-                        server_write_spawn(it_b, it_k, world_items[? it_k]);
-                        network_send_packet(sender, it_b, buffer_tell(it_b));
-                        buffer_delete(it_b);
-                        it_k = ds_map_find_next(world_items, it_k);
-                    }
-
-                    // where every other player is
-                    var ps_k = ds_map_find_first(positions);
-                    while (!is_undefined(ps_k)) {
-                        if (ps_k != sender) {
-                            var ps_v = positions[? ps_k];
-                            var ps_b = buffer_create(16, buffer_grow, 1);
-                            buffer_write(ps_b, buffer_u8, 2);
-                            buffer_write(ps_b, buffer_u16, ps_k);
-                            buffer_write(ps_b, buffer_f32, ps_v[0]);
-                            buffer_write(ps_b, buffer_f32, ps_v[1]);
-                            network_send_packet(sender, ps_b, buffer_tell(ps_b));
-                            buffer_delete(ps_b);
-                        }
-                        ps_k = ds_map_find_next(positions, ps_k);
-                    }
-
-                    // everyone's health
-                    var hl_k = ds_map_find_first(healths);
-                    while (!is_undefined(hl_k)) {
-                        if (hl_k != sender) {
-                            var hl_v = healths[? hl_k];
-                            var hl_b = buffer_create(16, buffer_grow, 1);
-                            buffer_write(hl_b, buffer_u8, 8);
-                            buffer_write(hl_b, buffer_u16, hl_k);
-                            buffer_write(hl_b, buffer_u16, hl_v[0]);
-                            buffer_write(hl_b, buffer_u16, hl_v[1]);
-                            network_send_packet(sender, hl_b, buffer_tell(hl_b));
-                            buffer_delete(hl_b);
-                        }
-                        hl_k = ds_map_find_next(healths, hl_k);
-                    }
-
-                    // trees and rocks that are already damaged or cut down
-                    server_send_resource_state(sender);
                     break;
 
                 case 13: // a player wants to pick up an item
