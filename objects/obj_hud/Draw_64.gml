@@ -37,7 +37,7 @@ draw_set_color(c_white);
 draw_rectangle(hx, st_y, hx + bw, st_y + st_h, true);
 
 // ---- everyone else: smaller bars underneath ----
-var oy = by + bh + 26; // was 14
+var oy = by + bh + 14; // was 14
 with (obj_remote_player) {
     var r_w = 150;
     var r_h = 10;
@@ -69,4 +69,22 @@ with (obj_remote_player) {
     oy += 36;
 }
 draw_set_alpha(1);
+draw_set_color(c_white);
+
+
+// DEBUG: delete when we've found it
+var dbx = hud_x;
+var dby = 300;
+draw_set_color(c_yellow);
+draw_text(dbx, dby, "servers: " + string(instance_number(obj_server)) + "   clients: " + string(instance_number(obj_client)) + "   remote players: " + string(instance_number(obj_remote_player)));
+dby += 20;
+if (instance_exists(obj_server)) {
+    draw_text(dbx, dby, "server connections: " + string(ds_list_size(obj_server.clients)));
+    dby += 20;
+}
+draw_text(dbx, dby, "me: hp " + string(obj_player.hp));
+with (obj_remote_player) {
+    dby += 20;
+    draw_text(dbx, dby, "pid " + string(net_pid) + "   hp " + string(hp) + "   at " + string(round(x)) + ", " + string(round(y)));
+}
 draw_set_color(c_white);
