@@ -183,13 +183,60 @@ function server_init_world() {
 
 function tools_init() {
     global.tool_list = [
-        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 60 },
-        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 60 },
-        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 60 },
-        { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 60 }
+        { name: "Sword",       tip_angle: 45, sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 60, power: { player: 5, tree: 2, rock: 2 } },
+        { name: "Axe",         tip_angle: 45, sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 60, power: { player: 3, tree: 5, rock: 2 } },
+        { name: "Pickaxe",     tip_angle: 45, sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 60, power: { player: 3, tree: 2, rock: 5 } },
+        { name: "Fishing Rod", tip_angle: 45, sprite: spr_fishing_rod, swing_arc: 20, swing_time: 20, reach: 60, power: { player: 1 } }
     ];
     global.tool_selected = -1;
     global.click_used = false;
+}
+
+// how hard a tool hits a kind of target ("player", "tree", "rock", ...). 0 = does nothing
+function tool_power(_tool, _target) {
+    if (_tool < 0 || _tool >= array_length(global.tool_list)) return 0;
+    var p = global.tool_list[_tool].power;
+    return variable_struct_exists(p, _target) ? p[$ _target] : 0;
+}
+
+function resources_init() {
+    if (variable_global_exists("resource_db")) exit;
+    global.resource_db = {
+        tree: { obj: obj_tree, hp: 35, drop_item: "wood",  drop_min: 2, drop_max: 4 },
+        rock: { obj: obj_rock, hp: 35, drop_item: "stone", drop_min: 2, drop_max: 5 }
+    };
+}
+
+// tells one client about every tree/rock that is already damaged or cut down
+function server_send_resource_state(_socket) {
+    with (obj_server) {
+        var b = buffer_create(1024, buffer_grow, 1);
+
+        var k = ds_map_find_first(resources);
+        while (!is_undefined(k)) {
+            var r = resources[? k];
+            if (r.hp < global.resource_db[$ r.type].hp) {
+                buffer_write(b, buffer_u8, 20);
+                buffer_write(b, buffer_u32, k);
+                buffer_write(b, buffer_f32, r.hp);
+                if (buffer_tell(b) > 700) {
+                    network_send_packet(_socket, b, buffer_tell(b));
+                    buffer_seek(b, buffer_seek_start, 0);
+                }
+            }
+            k = ds_map_find_next(resources, k);
+        }
+        for (var i = 0; i < ds_list_size(res_gone); i++) {
+            buffer_write(b, buffer_u8, 21);
+            buffer_write(b, buffer_u32, res_gone[| i]);
+            if (buffer_tell(b) > 700) {
+                network_send_packet(_socket, b, buffer_tell(b));
+                buffer_seek(b, buffer_seek_start, 0);
+            }
+        }
+        if (buffer_tell(b) > 0) network_send_packet(_socket, b, buffer_tell(b));
+        buffer_delete(b);
+    }
 }
 
 // draws a sprite shrunk to fit a square, centered on (_cx, _cy), optionally rotated
