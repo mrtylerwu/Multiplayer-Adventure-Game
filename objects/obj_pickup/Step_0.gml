@@ -14,6 +14,7 @@ if (instance_exists(obj_player) && !global.inv_open) {
 }*/
 
 if (near && hovered && net_id != -1 && mouse_check_button_pressed(mb_left)) {
+	global.click_used = true;      // <- new line
     var b = buffer_create(8, buffer_grow, 1);
     buffer_write(b, buffer_u8, 13);
     buffer_write(b, buffer_u32, net_id);

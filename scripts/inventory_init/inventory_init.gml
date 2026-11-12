@@ -2,7 +2,8 @@ function inventory_init() {
     // every item type in the game is defined here
     global.item_db = {
         wood: { name: "Wood", sprite: spr_wood, obj: obj_wood, max_stack: 20 },
-		stone: { name: "Stone", sprite: spr_stone, obj: obj_stone, max_stack: 20 }
+		stone: { name: "Stone", sprite: spr_stone, obj: obj_stone, max_stack: 20 },
+		medkit: { name: "Medkit", sprite: spr_medkit, obj: obj_medkit, max_stack: 1 }
     };
     global.inv_cols = 6;
     global.inv_rows = 4;
@@ -105,18 +106,100 @@ function server_spawn_item(_item, _amount, _x, _y, _broadcast) {
     }
 }
 
+
+function server_write_enemy_spawn(_b, _eid, _e) {
+    buffer_write(_b, buffer_u8, 16); // 16 = enemy spawn
+    buffer_write(_b, buffer_u32, _eid);
+    buffer_write(_b, buffer_string, _e.enemy_type);
+    buffer_write(_b, buffer_f32, _e.x);
+    buffer_write(_b, buffer_f32, _e.y);
+}
+
+
+// Create and register an enemy on the server
+function server_spawn_enemy(_enemy_type, _x, _y, _broadcast) {
+    with (obj_server) {
+        if (ds_map_size(world_enemies) < max_enemies) {
+            var eid = next_enemy_id;
+            next_enemy_id++;
+
+            var e = {
+                enemy_type: _enemy_type,
+                x: _x,
+                y: _y
+            };
+
+            world_enemies[? eid] = e;
+
+            // Tell all connected clients about the enemy
+            if (_broadcast) {
+                var b = buffer_create(32, buffer_grow, 1);
+                server_write_enemy_spawn(b, eid, e);
+
+                for (var i = 0; i < ds_list_size(clients); i++) {
+                    network_send_packet(clients[| i], b, buffer_tell(b));
+                }
+
+                buffer_delete(b);
+            }
+        }
+    }
+}
+
+
+// Spawn the starting enemies
+function server_init_enemies() {
+    repeat (5) {
+        var p = world_random_land_point(1);
+
+        server_spawn_enemy("aphid", p.x, p.y, false);
+    }
+}
+
 // the starting items on the ground, created by the server only
-// CAN DELETE LATER
 function server_init_world() {
     with (obj_server) {
         ds_map_clear(world_items);
         next_item_id = 1;
+		
+		ds_map_clear(world_enemies);
+		next_enemy_id = 1;
     }
-    var ww = 3200, wh = 3200;   // set these to rm_game's real width and height
+
+    // wood only on grass
     repeat (10) {
-	    server_spawn_item("wood", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
-	}
-	repeat (8) {
-	    server_spawn_item("stone", irandom_range(1, 3), irandom_range(100, ww - 100), irandom_range(100, wh - 100), false);
-	}
+        var p = world_random_land_point(1, T_GRASS);
+        server_spawn_item("wood", irandom_range(1, 3), p.x, p.y, false);
+    }
+
+    // stone anywhere on land (sand or grass)
+    repeat (10) {
+        var p2 = world_random_land_point(1);
+        server_spawn_item("stone", irandom_range(1, 3), p2.x, p2.y, false);
+    }
+}
+
+
+
+function tools_init() {
+    global.tool_list = [
+        { name: "Sword",       tip_angle: 45,	sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 60 },
+        { name: "Axe",         tip_angle: 45,	sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 60 },
+        { name: "Pickaxe",     tip_angle: 45,	sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 60 },
+        { name: "Fishing Rod", tip_angle: 45,	sprite: spr_fishing_rod, swing_arc: 20,  swing_time: 20, reach: 60 }
+    ];
+    global.tool_selected = -1;
+    global.click_used = false;
+}
+
+// draws a sprite shrunk to fit a square, centered on (_cx, _cy), optionally rotated
+function draw_sprite_fit(_spr, _cx, _cy, _size, _alpha, _angle = 0) {
+    var sw = sprite_get_width(_spr);
+    var sh = sprite_get_height(_spr);
+    var sc = _size / max(sw, sh);
+    var vx = (sw / 2 - sprite_get_xoffset(_spr)) * sc;
+    var vy = (sh / 2 - sprite_get_yoffset(_spr)) * sc;
+    var rx = vx * dcos(_angle) + vy * dsin(_angle);
+    var ry = -vx * dsin(_angle) + vy * dcos(_angle);
+    draw_sprite_ext(_spr, 0, _cx - rx, _cy - ry, sc, sc, _angle, c_white, _alpha);
 }

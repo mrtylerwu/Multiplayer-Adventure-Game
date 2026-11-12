@@ -32,7 +32,13 @@ switch (async_load[? "type"]) {
 				    var inst = remote_players[? pid];
 				    if (is_undefined(inst) || !instance_exists(inst)) {
 				        inst = instance_create_layer(px, py, "Instances", obj_remote_player);
+				        inst.net_pid = pid;
 				        remote_players[? pid] = inst;
+				        var ph = pending_hp[? pid];
+				        if (!is_undefined(ph)) {
+				            inst.hp = ph[0];
+				            inst.hp_max = ph[1];
+				        }
 				    }
 				    inst.target_x = px;
 				    inst.target_y = py;
@@ -50,7 +56,38 @@ switch (async_load[? "type"]) {
 				    break;
 
 				case 4: // start game
+				    global.world_seed = buffer_read(buff, buffer_u32);
+				    world_generate(global.world_seed);
 				    room_goto(rm_game);
+				    break;
+					
+				case 6: // someone else swung a tool
+				    var spid = buffer_read(buff, buffer_u16);
+				    var stool = buffer_read(buff, buffer_u8);
+				    var saim = buffer_read(buff, buffer_f32);
+				    var ssweep = buffer_read(buff, buffer_s8);
+
+				    var rp = remote_players[? spid];
+				    if (!is_undefined(rp) && instance_exists(rp) && stool < array_length(global.tool_list)) {
+				        var sw = instance_create_layer(rp.x, rp.y, "Instances", obj_swing);
+				        sw.owner = rp.id;      // the swing follows that player's character
+				        sw.tool = stool;
+				        sw.aim = saim;
+				        sw.sweep = ssweep;
+				    }
+				    break;
+					
+				case 8: // another player's health
+				    var hpid = buffer_read(buff, buffer_u16);
+				    var hhp = buffer_read(buff, buffer_u16);
+				    var hmax = buffer_read(buff, buffer_u16);
+				    var hinst = remote_players[? hpid];
+				    if (!is_undefined(hinst) && instance_exists(hinst)) {
+				        hinst.hp = hhp;
+				        hinst.hp_max = hmax;
+				    } else {
+				        pending_hp[? hpid] = [hhp, hmax];
+				    }
 				    break;
 					
 				case 11: // an item appeared on the ground
@@ -67,6 +104,22 @@ switch (async_load[? "type"]) {
 				        world_pickups[? sid] = inst;
 				    }
 				    break;
+					
+				case 16: // an enemy appeared
+					var eid = buffer_read(buff, buffer_u32);
+					var etype = buffer_read(buff, buffer_string);
+					var ex = buffer_read(buff, buffer_f32);
+					var ey = buffer_read(buff, buffer_f32);
+					
+					if (room == rm_game && !ds_map_exists(world_enemies, eid)) {
+						if (etype == "aphid") {
+							var enemy = instance_create_layer(ex,ey,"Instances",Obj_corruptAphids);
+							enemy.net_id = eid;
+							world_enemies[? eid] = enemy;
+						}
+					}
+					break;
+
 
 				case 12: // an item was picked up by someone
 				    var rid = buffer_read(buff, buffer_u32);

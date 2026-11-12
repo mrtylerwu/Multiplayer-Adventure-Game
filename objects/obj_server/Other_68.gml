@@ -12,6 +12,8 @@ switch (async_load[? "type"]) {
 	    var i = ds_list_find_index(clients, async_load[? "socket"]);
 	    if (i != -1) ds_list_delete(clients, i);
 	    ds_map_delete(names, async_load[? "socket"]);
+	    ds_map_delete(positions, async_load[? "socket"]);
+		ds_map_delete(healths, async_load[? "socket"]);
 	    server_broadcast_lobby();
 	    break;
 		
@@ -35,6 +37,7 @@ switch (async_load[? "type"]) {
                 case 1: // position
                     var px = buffer_read(buff, buffer_f32);
                     var py = buffer_read(buff, buffer_f32);
+					positions[? sender] = [px, py];   // <- new line
 
                     var out = buffer_create(16, buffer_grow, 1);
                     buffer_write(out, buffer_u8, 2);        // 2 = "another player moved"
@@ -49,6 +52,41 @@ switch (async_load[? "type"]) {
                     buffer_delete(out);
                     break;
 					
+				case 5: // a player swung a tool: pass it on to everyone else
+				    var swing_tool = buffer_read(buff, buffer_u8);
+				    var swing_aim = buffer_read(buff, buffer_f32);
+				    var swing_sweep = buffer_read(buff, buffer_s8);
+
+				    var swb = buffer_create(16, buffer_grow, 1);
+				    buffer_write(swb, buffer_u8, 6);
+				    buffer_write(swb, buffer_u16, sender);   // who swung
+				    buffer_write(swb, buffer_u8, swing_tool);
+				    buffer_write(swb, buffer_f32, swing_aim);
+				    buffer_write(swb, buffer_s8, swing_sweep);
+				    for (var sw_i = 0; sw_i < ds_list_size(clients); sw_i++) {
+				        var sw_c = clients[| sw_i];
+				        if (sw_c != sender) network_send_packet(sw_c, swb, buffer_tell(swb));
+				    }
+				    buffer_delete(swb);
+				    break;
+					
+				case 7: // a player's health changed: remember it and tell everyone else
+				    var hp_new = buffer_read(buff, buffer_u16);
+				    var hpm_new = buffer_read(buff, buffer_u16);
+				    healths[? sender] = [hp_new, hpm_new];
+
+				    var hrb = buffer_create(16, buffer_grow, 1);
+				    buffer_write(hrb, buffer_u8, 8);
+				    buffer_write(hrb, buffer_u16, sender);
+				    buffer_write(hrb, buffer_u16, hp_new);
+				    buffer_write(hrb, buffer_u16, hpm_new);
+				    for (var hr_i = 0; hr_i < ds_list_size(clients); hr_i++) {
+				        var hr_c = clients[| hr_i];
+				        if (hr_c != sender) network_send_packet(hr_c, hrb, buffer_tell(hrb));
+				    }
+				    buffer_delete(hrb);
+				    break;
+					
 				case 10: // a client is ready: send it everything on the ground
 				    var k = ds_map_find_first(world_items);
 				    while (!is_undefined(k)) {
@@ -58,6 +96,44 @@ switch (async_load[? "type"]) {
 				        buffer_delete(wb);
 				        k = ds_map_find_next(world_items, k);
 				    }
+					// Send all existing enemies to the newly ready client
+					var ek = ds_map_find_first(world_enemies);
+					while (!is_undefined(ek)) {
+						var eb = buffer_create(32, buffer_grow, 1);
+						server_write_enemy_spawn(eb, ek, world_enemies[? ek]);
+						network_send_packet(sender, eb, buffer_tell(eb));
+						buffer_delete(eb);
+						ek = ds_map_find_next(world_enemies, ek);
+						}
+
+					var pk = ds_map_find_first(positions);
+				    while (!is_undefined(pk)) {
+				        if (pk != sender) {
+				            var ppos = positions[? pk];
+				            var pb = buffer_create(16, buffer_grow, 1);
+				            buffer_write(pb, buffer_u8, 2);        // same message as "another player moved"
+				            buffer_write(pb, buffer_u16, pk);
+				            buffer_write(pb, buffer_f32, ppos[0]);
+				            buffer_write(pb, buffer_f32, ppos[1]);
+				            network_send_packet(sender, pb, buffer_tell(pb));
+				            buffer_delete(pb);
+				        }
+				        pk = ds_map_find_next(positions, pk);
+					}
+					var hk = ds_map_find_first(healths);
+					while (!is_undefined(hk)) {
+					    if (hk != sender) {
+					        var hv = healths[? hk];
+					        var hb2 = buffer_create(16, buffer_grow, 1);
+					        buffer_write(hb2, buffer_u8, 8);
+					        buffer_write(hb2, buffer_u16, hk);
+					        buffer_write(hb2, buffer_u16, hv[0]);
+					        buffer_write(hb2, buffer_u16, hv[1]);
+					        network_send_packet(sender, hb2, buffer_tell(hb2));
+					        buffer_delete(hb2);
+					    }
+					    hk = ds_map_find_next(healths, hk);
+					}
 				    break;
 
 				case 13: // pickup request
