@@ -89,4 +89,18 @@ if (hp != last_hp && instance_exists(obj_client)) {
 //if (keyboard_check_pressed(ord("K"))) hp -= 10;
 //if (keyboard_check_pressed(ord("L"))) hp += 10;
 
+// TEMPORARY: F4 teleports you next to the extraction zone
+if (keyboard_check_pressed(vk_f4) && instance_exists(obj_extraction)) {
+    x = obj_extraction.x + 400;
+    y = obj_extraction.y;
+}
+
+// TEMPORARY: F5 makes the server drop the three totem pieces next to you
+if (keyboard_check_pressed(vk_f5) && instance_exists(obj_server)) {
+    for (var tp = 1; tp <= 3; tp++) {
+        server_spawn_item("totem" + string(tp), 1, x + 120 * tp, y + 120, true);
+    }
+}
+
+
 depth = -bbox_bottom;   // lower on screen = drawn in front, so you can stand behind a tree

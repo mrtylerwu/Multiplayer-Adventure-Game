@@ -1,3 +1,13 @@
+// the minimap doesn't need every individual tree, and drawing them all there is slow
+if (view_current == 1) exit;
+
+// skip anything that is off screen
+var cam = view_camera[view_current];
+var cam_x = camera_get_view_x(cam);
+var cam_y = camera_get_view_y(cam);
+if (x < cam_x - 150 || x > cam_x + camera_get_view_width(cam) + 150 || y < cam_y - 50 || y > cam_y + camera_get_view_height(cam) + 200) exit;
+
+
 var shake_x = (shake_timer > 0) ? random_range(-2, 2) : 0;
 draw_sprite_ext(sprite_index, image_index, x + shake_x, y, image_xscale, image_yscale, 0, c_white, fade_alpha);
 

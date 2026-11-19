@@ -6,3 +6,4 @@ hovered = false;
 glow_t = random(360);
 
 net_id = -1;
+full_timer = 0;

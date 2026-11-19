@@ -28,3 +28,5 @@ if (!instance_exists(obj_client)) {
         draw_text(40, 150 + i * 24, obj_client.lobby[i].name);
     }
 }
+
+resources_init();

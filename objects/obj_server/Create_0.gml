@@ -12,3 +12,13 @@ res_gone = ds_list_create();      // ids of trees and rocks that were cut down
 packets_received = 0;
 async_count = 0;
 last_type = -1;
+
+base_mask = 0;        // which totem pieces are placed, and whether it's restored
+base_x = 0;
+base_y = 0;
+extract_x = 0;
+extract_y = 0;
+extract_timer = 0;
+game_won = false;
+
+init_log = "server_init_world has NOT run";

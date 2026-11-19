@@ -3,12 +3,17 @@ function inventory_init() {
     global.item_db = {
         wood: { name: "Wood", sprite: spr_wood, obj: obj_wood, max_stack: 20 },
 		stone: { name: "Stone", sprite: spr_stone, obj: obj_stone, max_stack: 20 },
-		medkit: { name: "Medkit", sprite: spr_medkit, obj: obj_medkit, max_stack: 1 }
+		medkit: { name: "Medkit", sprite: spr_medkit, obj: obj_medkit, max_stack: 1 },
+		ore: { name: "Ore", sprite: spr_ore, obj: obj_ore, max_stack: 20 },
+		
     };
     global.inv_cols = 6;
     global.inv_rows = 4;
     global.inv_slots = array_create(global.inv_cols * global.inv_rows, -1);  // -1 = empty
     global.inv_open = false;
+	
+    totem_register_items();   // TOTEM: must come after the item list above
+
 }
 
 // returns how many items did NOT fit (0 = everything was added)
@@ -108,32 +113,40 @@ function server_spawn_item(_item, _amount, _x, _y, _broadcast) {
 
 // the starting items on the ground, created by the server only
 function server_init_world() {
+    obj_server.init_log = "server_init_world started";
+
     with (obj_server) {
         ds_map_clear(world_items);
         next_item_id = 1;
     }
 
-    // wood only on grass
+    // wood: grass only
     repeat (10) {
         var p = world_random_land_point(1, T_GRASS);
         server_spawn_item("wood", irandom_range(1, 3), p.x, p.y, false);
     }
 
-    // stone anywhere on land (sand or grass)
+    // stone: anywhere within 128 pixels of land
     repeat (10) {
-        var p2 = world_random_land_point(1);
+        var p2 = world_random_point_near_land(128);
         server_spawn_item("stone", irandom_range(1, 3), p2.x, p2.y, false);
     }
+    obj_server.init_log = "after wood+stone: " + string(ds_map_size(obj_server.world_items)) + " items";
+
+    server_register_resources();    // trees and rocks
+    server_register_structures();   // BASES
+    totem_spawn_pieces();           // TOTEM
+    obj_server.init_log += "   after totem: " + string(ds_map_size(obj_server.world_items)) + " items";
 }
 
 
 
 function tools_init() {
     global.tool_list = [
-        { name: "Sword",       tip_angle: 45, sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 60, power: { player: 5, tree: 2, rock: 2 } },
-        { name: "Axe",         tip_angle: 45, sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 60, power: { player: 3, tree: 5, rock: 2 } },
-        { name: "Pickaxe",     tip_angle: 45, sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 60, power: { player: 3, tree: 2, rock: 5 } },
-        { name: "Fishing Rod", tip_angle: 45, sprite: spr_fishing_rod, swing_arc: 20, swing_time: 20, reach: 60, power: { player: 1 } }
+        { name: "Sword",       tip_angle: 45, sprite: spr_sword,       swing_arc: 40, swing_time: 40, reach: 80, power: { player: 5, tree: 2, rock: 2 } },
+        { name: "Axe",         tip_angle: 45, sprite: spr_axe,         swing_arc: 40, swing_time: 40, reach: 80, power: { player: 3, tree: 5, rock: 2 } },
+        { name: "Pickaxe",     tip_angle: 45, sprite: spr_pickaxe,     swing_arc: 40, swing_time: 40, reach: 80, power: { player: 3, tree: 2, rock: 5 } },
+        { name: "Fishing Rod", tip_angle: 45, sprite: spr_fishing_rod, swing_arc: 20, swing_time: 20, reach: 80, power: { player: 1 } }
     ];
     global.tool_selected = -1;
     global.click_used = false;
@@ -149,8 +162,9 @@ function tool_power(_tool, _target) {
 function resources_init() {
     if (variable_global_exists("resource_db")) exit;
     global.resource_db = {
-        tree: { obj: obj_tree, hp: 35, drop_item: "wood",  drop_min: 2, drop_max: 4 },
-        rock: { obj: obj_rock, hp: 35, drop_item: "stone", drop_min: 2, drop_max: 5 }
+        tree: { obj: obj_tree, hp: 40, drop_item: "wood",  drop_min: 3, drop_max: 5 },
+        rock: { obj: obj_rock, hp: 50, drop_item: "stone", drop_min: 5, drop_max: 7,
+			bonus_item: "ore", bonus_chance: 0.25, bonus_min: 1, bonus_max: 2 }
     };
 }
 
@@ -196,4 +210,16 @@ function draw_sprite_fit(_spr, _cx, _cy, _size, _alpha, _angle = 0) {
     var rx = vx * dcos(_angle) + vy * dsin(_angle);
     var ry = -vx * dsin(_angle) + vy * dcos(_angle);
     draw_sprite_ext(_spr, 0, _cx - rx, _cy - ry, sc, sc, _angle, c_white, _alpha);
+}
+
+// true if the whole stack would fit in the inventory
+function inventory_has_room(_item, _amount) {
+    var max_stack = global.item_db[$ _item].max_stack;
+    var space = 0;
+    for (var i = 0; i < array_length(global.inv_slots); i++) {
+        var s = global.inv_slots[i];
+        if (!is_struct(s)) space += max_stack;
+        else if (s.item == _item) space += max_stack - s.count;
+    }
+    return space >= _amount;
 }
