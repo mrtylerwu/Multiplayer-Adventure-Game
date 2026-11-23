@@ -242,7 +242,7 @@ function world_generate(_seed) {
 				island_score[gy * GW + gx] = sc;
             }
         }
-        var thr = percentile_threshold(island_score, 0.60);
+        var thr = percentile_threshold(island_score, 0.65);
         var g = array_create(total, 0);
         for (var i = 0; i < total; i++) {
             if (island_score[i] >= thr) g[i] = 1;
@@ -298,8 +298,8 @@ function world_generate(_seed) {
                 var ti = ty * GW + tx;
                 if (g[ti] == 0) continue;
                 var wv = clamp((noise_fbm(width_layers, tx, ty) - 0.3) * 2.5, 0, 1);
-                var coast_w = lerp(2, 4, wv);     // sand belt along the sea: 2 to 4 cells
-                var pond_w  = lerp(1, 1.5, wv);   // thinner belt around ponds: 1 to 1.5 cells
+                var coast_w = lerp(2, 5, wv);     // sand belt along the sea: 2 to 4 cells
+                var pond_w  = lerp(1, 2, wv);   // thinner belt around ponds: 1 to 1.5 cells
                 if (d_ocean[ti] <= coast_w || d_pond[ti] <= pond_w) terrain[ti] = T_SAND;
                 else terrain[ti] = T_GRASS;
             }
@@ -529,4 +529,84 @@ function minimap_build() {
     var spr = sprite_create_from_surface(surf, 0, 0, mw, mh, false, false, 0, 0);
     surface_free(surf);
     return spr;
+}
+
+// ================= trees and rocks =================
+// builds the list of trees and rocks for a seed. the server and every game run this and get the same result
+function resources_generate(_seed) {
+    var blocked = structures_generate(_seed);   // trees and rocks stay off the structures (must stay above the seed line)
+    random_set_seed(_seed + 31337);
+
+    var list = [];
+    var occ = array_create(GW * GH, false);
+    var ms = GW / 128;
+    var forest = [noise_lattice(12 * ms), noise_lattice(6 * ms)];
+
+    var grass_cells = 0;
+    var land_cells = 0;
+    for (var i = 0; i < GW * GH; i++) {
+        var t = global.world_grid[i];
+        if (t >= T_SAND) land_cells++;
+        if (t == T_GRASS) grass_cells++;
+    }
+
+    var plan = [
+        { type: "tree", count: round(grass_cells * 0.03),  min_terrain: T_GRASS, clumps: true },
+        { type: "rock", count: round(land_cells * 0.005), min_terrain: T_SAND,  clumps: false }
+    ];
+
+    for (var p = 0; p < array_length(plan); p++) {
+        var job = plan[p];
+        var placed = 0;
+        var tries = 0;
+        while (placed < job.count && tries < job.count * 80) {
+            tries++;
+            var gx = irandom_range(3, GW - 4);
+            var gy = irandom_range(3, GH - 4);
+
+            if (point_distance(gx, gy, GW / 2, GH / 2) < 9) continue;
+            if (job.clumps && noise_fbm(forest, gx, gy) < 0.5) continue;
+
+            var in_structure = false;
+            for (var si = 0; si < array_length(blocked); si++) {
+                if (point_distance(gx, gy, blocked[si].x / CELL, blocked[si].y / CELL) < blocked[si].r + 2) in_structure = true;
+            }
+            if (in_structure) continue;
+
+            var ok = true;
+            for (var oy = -1; oy <= 1 && ok; oy++) {
+                for (var ox = -1; ox <= 1 && ok; ox++) {
+                    if (world_terrain_at_cell(gx + ox, gy + oy) < job.min_terrain) ok = false;
+                    if (occ[(gy + oy) * GW + gx + ox]) ok = false;
+                }
+            }
+            if (!ok) continue;
+
+            occ[gy * GW + gx] = true;
+            array_push(list, {
+                rid: array_length(list) + 1,
+                type: job.type,
+                x: gx * CELL + CELL / 2 + irandom_range(-8, 8),
+                y: gy * CELL + CELL - 8
+            });
+            placed++;
+        }
+    }
+    randomize();
+    return list;
+}
+
+// the server's own copy of every tree and rock, with its health
+function server_register_resources() {
+    resources_init();   // makes sure the tree and rock list exists
+    var list = resources_generate(global.world_seed);
+    with (obj_server) {
+        ds_map_clear(resources);
+        ds_list_clear(res_gone);
+    }
+    for (var i = 0; i < array_length(list); i++) {
+        var r = list[i];
+        var def = global.resource_db[$ r.type];
+        obj_server.resources[? r.rid] = { type: r.type, x: r.x, y: r.y, hp: def.hp };
+    }
 }

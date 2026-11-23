@@ -1,5 +1,5 @@
 // open / close
-if (keyboard_check_pressed(ord("E"))) {
+if (keyboard_check_pressed(ord("E")) && !global.base_gui_open) {
     global.inv_open = !global.inv_open;
 
     if (!global.inv_open && drag_from != -1) {   // closed while holding: put it back

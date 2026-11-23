@@ -19,3 +19,13 @@ next_enemy_id = 1;
 
 // Enemy spawning settings
 max_enemies = 10;
+
+base_mask = 0;        // which totem pieces are placed, and whether it's restored
+base_x = 0;
+base_y = 0;
+extract_x = 0;
+extract_y = 0;
+extract_timer = 0;
+game_won = false;
+
+init_log = "server_init_world has NOT run";

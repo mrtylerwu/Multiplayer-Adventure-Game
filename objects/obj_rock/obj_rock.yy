@@ -33,8 +33,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"Sprite15",
-    "path":"sprites/Sprite15/Sprite15.yy",
+    "name":"spr_clusters",
+    "path":"sprites/spr_clusters/spr_clusters.yy",
   },
   "spriteMaskId":null,
   "visible":true,

@@ -161,6 +161,19 @@ switch (async_load[? "type"]) {
                     }
                     ds_map_delete(resource_nodes, gone_id);
                     break;
+					
+				case 23: // TOTEM: someone holds the complete totem, so everyone wins
+				    if (room != rm_win) room_goto(rm_win);
+				    break;
+					
+				case 25: // BASE: the server accepted your totem piece
+				    var bp_slot = buffer_read(buff, buffer_u8);
+				    inv_take("totem" + string(bp_slot + 1), 1);
+				    break;
+
+				case 26: // BASE: what's placed in the base changed
+				    global.base_mask = buffer_read(buff, buffer_u8);
+				    break;
 
                 default:
                     buffer_seek(buff, buffer_seek_start, size);

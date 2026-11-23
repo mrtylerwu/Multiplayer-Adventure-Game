@@ -1,18 +1,23 @@
 // Draw
 if (view_current == 1) {
-    // how much the minimap shrinks the world
-    var s = view_wport[1] / camera_get_view_width(view_camera[1]);
+    var mm_s = view_wport[1] / camera_get_view_width(view_camera[1]);   // how much the minimap shrinks the world
+    var mm_cx = (bbox_left + bbox_right) / 2;
+    var mm_cy = (bbox_top + bbox_bottom) / 2;
 
-    // size you want the icon to appear on the minimap, in minimap pixels
-    var icon = 12 / s;   // converted to world pixels
+    var mm_col = c_white;                       // anything else: white
+    var mm_r = 2 / mm_s;                        // dot radius: 5 minimap pixels
+    if (item_id == "wood")  mm_col = make_colour_rgb(200, 140, 60);
+    if (item_id == "stone") mm_col = c_ltgray;
+    if (string_copy(item_id, 1, 5) == "totem") {
+        mm_col = make_colour_rgb(255, 215, 0);                  // totem pieces: gold, bigger, pulsing
+        mm_r = (6 + sin(current_time / 200)) / mm_s;
+    }
 
-    var cx = (bbox_left + bbox_right) / 2;
-    var cy = (bbox_top + bbox_bottom) / 2;
-
-    //draw_set_color(c_black);
-    //draw_circle(cx, cy, icon * 0.65, false);    // dark backing so it stands out on grass
+    draw_set_color(c_black);
+    draw_circle(mm_cx, mm_cy, mm_r + 2 / mm_s, false);          // dark outline so it stands out
+    draw_set_color(mm_col);
+    draw_circle(mm_cx, mm_cy, mm_r, false);
     draw_set_color(c_white);
-    draw_item_icon(item_id, cx, cy, icon, 1);   // the item's own sprite, scaled up
     exit;
 }
 
