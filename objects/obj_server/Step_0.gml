@@ -1,5 +1,5 @@
 // the win: the totem is restored, and every connected player is inside the extraction zone
-if (game_won || (base_mask & 8) == 0) exit;
+if (game_won || !base_restored) exit;     // the totem has to be assembled first
 
 extract_timer++;
 if (extract_timer < 10) exit;         // checks about 6 times a second

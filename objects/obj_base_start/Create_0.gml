@@ -1,4 +1,9 @@
 event_inherited();
+interact_text = "Click to open";
+interact_range = 200;
+map_color = make_colour_rgb(255, 235, 140);
+
+/*event_inherited();
 interact_text = "Click to restore the totem";
 map_color = make_colour_rgb(255, 235, 140);
 
@@ -26,3 +31,4 @@ slot_x = function(i) { return panel_x + (panel_w - (4 * slot_size + 3 * slot_gap
 slot_y = function() { return panel_y + 100; };
 btn_x = function() { return panel_x + (panel_w - btn_w) / 2; };
 btn_y = function() { return panel_y + panel_h - btn_h - 30; };
+*/

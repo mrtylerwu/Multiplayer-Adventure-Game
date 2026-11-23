@@ -13,8 +13,8 @@ packets_received = 0;
 async_count = 0;
 last_type = -1;
 
-base_mask = 0;        // which totem pieces are placed, and whether it's restored
-base_x = 0;
+base_slots = [0, 0, 0];     // what is in the three assembly slots: 0 = empty, 1/2/3 = that piece
+base_restored = false;      // true once the totem has been assembledbase_x = 0;
 base_y = 0;
 extract_x = 0;
 extract_y = 0;
@@ -22,3 +22,4 @@ extract_timer = 0;
 game_won = false;
 
 init_log = "server_init_world has NOT run";
+base_output = false;        // true while the finished totem sits in the fourth slot

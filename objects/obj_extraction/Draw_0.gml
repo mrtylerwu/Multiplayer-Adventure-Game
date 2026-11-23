@@ -12,7 +12,7 @@ if (view_current == 1) {
     exit;
 }
 
-var restored = variable_global_exists("base_mask") && ((global.base_mask & 8) != 0);
+var restored = variable_global_exists("base_restored") && global.base_restored;
 var glow = 1;   // constant, so it doesn't fade in and out
 draw_sprite_ext(sprite_index, 0, x, y, zone_scale, zone_scale, 0, restored ? make_colour_rgb(160, 255, 180) : c_white, glow);
 

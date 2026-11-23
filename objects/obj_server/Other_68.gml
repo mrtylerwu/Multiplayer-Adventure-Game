@@ -229,32 +229,62 @@ switch (async_load[? "type"]) {
 				    buffer_delete(win_b);
 				    break;
 					
-				case 24: // BASE: a player wants to place a totem piece
+				case 24: // BASE: a player wants to put a totem piece in an assembly slot
 				    var bd_slot = buffer_read(buff, buffer_u8);
+				    var bd_piece = buffer_read(buff, buffer_u8);
 				    var bd_pos = positions[? sender];
-				    if (bd_slot < 3 && (base_mask & (1 << bd_slot)) == 0 && (base_mask & 8) == 0
-				        && !is_undefined(bd_pos) && point_distance(bd_pos[0], bd_pos[1], base_x, base_y) <= 500) {
-				        base_mask |= (1 << bd_slot);
 
-				        var bd_b = buffer_create(4, buffer_grow, 1);   // tells the placer to take it out of their bag
+				    var bd_ok = (bd_slot >= 0 && bd_slot < 3 && bd_piece >= 1 && bd_piece <= 3
+				        && base_slots[bd_slot] == 0 && !base_restored
+				        && !is_undefined(bd_pos) && point_distance(bd_pos[0], bd_pos[1], base_x, base_y) <= 500);
+				    if (bd_ok) {
+				        for (var bd_i = 0; bd_i < 3; bd_i++) {
+				            if (base_slots[bd_i] == bd_piece) bd_ok = false;     // each piece can only be in the base once
+				        }
+				    }
+
+				    if (bd_ok) {
+				        base_slots[bd_slot] = bd_piece;
+				        server_send_base_state();                                // everyone sees it
+				    } else {
+				        var bd_b = buffer_create(4, buffer_grow, 1);             // not accepted: send the piece back
 				        buffer_write(bd_b, buffer_u8, 25);
-				        buffer_write(bd_b, buffer_u8, bd_slot);
+				        buffer_write(bd_b, buffer_u8, bd_piece);
 				        network_send_packet(sender, bd_b, buffer_tell(bd_b));
 				        buffer_delete(bd_b);
-
-				        server_send_base_state();                      // everyone sees the new slot
+				        server_send_base_state(sender);                          // and correct their screen
 				    }
 				    break;
 
-				case 27: // BASE: a player pressed Restore
-				    var rs_pos = positions[? sender];
-				    if ((base_mask & 7) == 7 && (base_mask & 8) == 0
-				        && !is_undefined(rs_pos) && point_distance(rs_pos[0], rs_pos[1], base_x, base_y) <= 500) {
-				        base_mask |= 8;
+				case 27: // BASE: a player pressed Assemble
+				    var as_pos = positions[? sender];
+				    var as_have = [false, false, false, false];
+				    for (var as_i = 0; as_i < 3; as_i++) {
+				        if (base_slots[as_i] >= 1 && base_slots[as_i] <= 3) as_have[base_slots[as_i]] = true;
+				    }
+				    if (!base_restored && as_have[1] && as_have[2] && as_have[3]
+				        && !is_undefined(as_pos) && point_distance(as_pos[0], as_pos[1], base_x, base_y) <= 500) {
+				        base_slots = [0, 0, 0];          // the three pieces are used up
+				        base_restored = true;            // the totem has been assembled
+				        base_output = true;              // and it's waiting in the fourth slot
 				        server_send_base_state();
 				    }
 				    break;
+					
+				case 28: // BASE: a player takes the finished totem
+				    var tk_pos = positions[? sender];
+				    if (base_output && !is_undefined(tk_pos) && point_distance(tk_pos[0], tk_pos[1], base_x, base_y) <= 500) {
+				        base_output = false;
 
+				        var tk_b = buffer_create(4, buffer_grow, 1);   // only the player who clicked first gets it
+				        buffer_write(tk_b, buffer_u8, 29);
+				        network_send_packet(sender, tk_b, buffer_tell(tk_b));
+				        buffer_delete(tk_b);
+
+				        server_send_base_state();                      // the fourth slot empties for everyone
+				    }
+				    break;
+					
                 default: // unknown message: skip the rest of this packet
                     buffer_seek(buff, buffer_seek_start, size);
                     break;

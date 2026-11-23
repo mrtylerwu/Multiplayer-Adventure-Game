@@ -151,15 +151,37 @@ switch (async_load[? "type"]) {
 				    if (room != rm_win) room_goto(rm_win);
 				    break;
 					
-				case 25: // BASE: the server accepted your totem piece
-				    var bp_slot = buffer_read(buff, buffer_u8);
-				    inv_take("totem" + string(bp_slot + 1), 1);
+				case 25: // BASE: the server didn't accept your piece, so you get it back
+				    var rj_piece = buffer_read(buff, buffer_u8);
+				    var rj_left = inventory_add("totem" + string(rj_piece), 1);
+				    if (rj_left > 0) drop_item("totem" + string(rj_piece), rj_left);
 				    break;
 
-				case 26: // BASE: what's placed in the base changed
-				    global.base_mask = buffer_read(buff, buffer_u8);
+				case 26: // BASE: what's in the base changed
+				    var bs_a = buffer_read(buff, buffer_u8);
+				    var bs_b = buffer_read(buff, buffer_u8);
+				    var bs_c = buffer_read(buff, buffer_u8);
+				    global.base_slots = [bs_a, bs_b, bs_c];
+				    global.base_restored = (buffer_read(buff, buffer_u8) == 1);
+				    global.base_output = (buffer_read(buff, buffer_u8) == 1);
 				    break;
-
+					
+				case 29: // BASE: you took the finished totem. it's on your cursor now
+				    var tt_taken = false;
+				    if (instance_exists(obj_inventory)) {
+				        if (obj_inventory.drag_from == -1) {
+				            obj_inventory.drag_from = -2;      // -2 = it came from the base, not from an inventory slot
+				            obj_inventory.drag_item = { item: "totem", count: 1 };
+				            obj_inventory.held_by_button = mouse_check_button(mb_left);   // still holding the button = a drag, otherwise it sticks to the cursor
+				            tt_taken = true;
+				        }
+				    }
+				    if (!tt_taken) {
+				        var tt_left = inventory_add("totem", 1);           // your hands were full: straight into the bag
+				        if (tt_left > 0) drop_item("totem", tt_left);
+				    }
+				    break;
+					
                 default:
                     buffer_seek(buff, buffer_seek_start, size);
                     break;
