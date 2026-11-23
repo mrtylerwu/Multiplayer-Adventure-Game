@@ -105,6 +105,7 @@
     {"id":{"name":"spr_tree","path":"sprites/spr_tree/spr_tree.yy",},},
     {"id":{"name":"spr_water","path":"sprites/spr_water/spr_water.yy",},},
     {"id":{"name":"spr_wood","path":"sprites/spr_wood/spr_wood.yy",},},
+    {"id":{"name":"Sprite4","path":"sprites/Sprite4/Sprite4.yy",},},
     {"id":{"name":"ts_grass","path":"tilesets/ts_grass/ts_grass.yy",},},
     {"id":{"name":"ts_sand","path":"tilesets/ts_sand/ts_sand.yy",},},
   ],
